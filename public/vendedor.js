@@ -10,16 +10,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     document.getElementById('txtSucursal').innerText = nombre_sucursal;
     document.getElementById('txtEmpleado').innerText = empleado.toUpperCase();
+
+    obtenerStockActual();
 });
 
-async function registrarPancho(nombreProducto, precio) {
+// Traer los valores de la base de datos para mostrárselos a las chicas en los casilleros
+async function obtenerStockActual() {
+    const id_sucursal = sessionStorage.getItem('id_sucursal');
+    try {
+        const respuesta = await fetch('/api/reportes');
+        const datos = await respuesta.json();
+        
+        const miStock = datos.stock.find(local => local.id_sucursal == id_sucursal);
+        if (miStock) {
+            document.getElementById('invPan').value = Number(miStock.docenas_pan).toFixed(1);
+            document.getElementById('invSalchichas').value = miStock.salchichas;
+            document.getElementById('invG500').value = miStock.gaseosas_500;
+            document.getElementById('invG15').value = miStock.gaseosas_15;
+        }
+    } catch (error) {
+        console.error("Error de stock:", error);
+    }
+}
+
+// Permitir que las chicas pongan a mano cuánto hay realmente al empezar
+async function establecerStockInicial() {
+    const id_sucursal = sessionStorage.getItem('id_sucursal');
+    const docenas_pan = parseFloat(document.getElementById('invPan').value) || 0;
+    const salchichas = parseInt(document.getElementById('invSalchichas').value) || 0;
+    const gaseosas_500 = parseInt(document.getElementById('invG500').value) || 0;
+    const gaseosas_15 = parseInt(document.getElementById('invG15').value) || 0;
+
+    try {
+        const respuesta = await fetch('/api/stock/establecer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 })
+        });
+        if (respuesta.ok) {
+            alert('¡Inventario de almacén registrado con éxito para hoy!');
+        }
+    } catch (error) {
+        alert('Error al sincronizar el inventario.');
+    }
+}
+
+async function registrarOperacion(nombreProducto, precio, tipo) {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const empleado = sessionStorage.getItem('empleado');
     
+    // Si es gratis, el nombre del producto se guarda con una marca especial en los reportes
+    const productoFinal = tipo === 'gratis' ? `${nombreProducto} (CONSUMO DUEÑO)` : nombreProducto;
+
     const ventaData = {
         id_sucursal: parseInt(id_sucursal),
         empleado: empleado,
-        producto: nombreProducto,
+        producto: productoFinal,
         cantidad: 1,
         precio_unitario: precio
     };
@@ -31,9 +77,12 @@ async function registrarPancho(nombreProducto, precio) {
             body: JSON.stringify(ventaData)
         });
         if (respuesta.ok) {
-            alert(`¡${nombreProducto} anotado con éxito!`);
-        } else {
-            alert('Error en el servidor al registrar venta.');
+            if (tipo === 'gratis') {
+                alert(`¡Registrado! 🎁 Sacaste 1 ${nombreProducto} gratis de stock.`);
+            } else {
+                alert(`¡${nombreProducto} anotado con éxito!`);
+            }
+            obtenerStockActual(); // Refrescar stock en pantalla
         }
     } catch (error) {
         alert('Sin conexión con el servidor central.');
