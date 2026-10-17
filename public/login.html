@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panchetos - Ingreso Seguro</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #fdf6e2; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; border: 3px solid #f0ad4e; border-radius: 15px; padding: 30px; width: 100%; max-width: 360px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #d9534f; margin-bottom: 20px; font-size: 28px; }
+        label { display: block; text-align: left; font-weight: bold; margin-top: 15px; color: #333; }
+        select, input { width: 100%; padding: 12px; margin-top: 5px; border: 2px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        select:focus, input:focus { border-color: #f0ad4e; outline: none; }
+        .btn-ingresar { background: #d9534f; color: white; border: 2px solid #c9302c; padding: 14px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 25px; transition: 0.2s; }
+        .btn-ingresar:hover { background: #c9302c; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <h1>🌭 Panchetos</h1>
+        <h3>Control de Caja</h3>
+        <div>
+            <label>1. Selecciona tu Sucursal:</label>
+            <select id="loginSucursal">
+                <option value="1">Panchetos Pilar</option>
+                <option value="2">Alta Gracia</option>
+                <option value="3">Río Segundo</option>
+                <option value="4">Panchetos al Paso</option>
+                <option value="99">Administración</option>
+            </select>
+            <label>2. Nombre del Cajero/a / Administrador:</label>
+            <input type="text" id="loginEmpleado" placeholder="Ej: momo, mica, admin" onkeypress="detectarEnter(event)">
+            <label>3. Contraseña de Caja:</label>
+            <input type="password" id="loginPassword" placeholder="••••••••" onkeypress="detectarEnter(event)">
+            <button type="button" class="btn-ingresar" onclick="validarCajero()">🚪 Validar y Entrar</button>
+        </div>
+    </div>
+    <script>
+        const personalAutorizado = {
+            "momo": { sucursalId: "1", clave: "236" },
+            "mora": { sucursalId: "1", clave: "236" },
+            "micka": { sucursalId: "1", clave: "236" },
+            "anto": { sucursalId: "1", clave: "236" },
+            "mica": { sucursalId: "2", clave: "010" },
+            "vanesa": { sucursalId: "2", clave: "010" },
+            "agostina": { sucursalId: "2", clave: "010" },
+            "sharon": { sucursalId: "3", clave: "158" },
+            "roxi": { sucursalId: "3", clave: "158" },
+            "rocio": { sucursalId: "3", clave: "158" },
+            "cajero_paso": { sucursalId: "4", clave: "456" }, // Temporal
+            "admin": { sucursalId: "99", clave: "123" }
+        };
+        function detectarEnter(e) {
+            if (e.key === 'Enter') { validarCajero(); }
+        }
+        function validarCajero() {
+            const id_sucursal_seleccionada = document.getElementById('loginSucursal').value;
+            const nombre_sucursal = document.getElementById('loginSucursal').options[document.getElementById('loginSucursal').selectedIndex].text;
+            const empleado = document.getElementById('loginEmpleado').value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword').value;
+
+            if (!empleado || !password) {
+                alert("❌ Por favor, completa todos los campos.");
+                return;
+            }
+            const usuario = personalAutorizado[empleado];
+            if (!usuario) {
+                alert("❌ El nombre de usuario no está registrado.");
+                return;
+            }
+            if (usuario.sucursalId !== id_sucursal_seleccionada) {
+                alert(`❌ ${empleado.toUpperCase()} no pertenece a ${nombre_sucursal}.`);
+                return;
+            }
+            if (usuario.clave !== password) {
+                alert("❌ Contraseña incorrecta.");
+                return;
+            }
+            sessionStorage.setItem('id_sucursal', id_sucursal_seleccionada);
+            sessionStorage.setItem('nombre_sucursal', nombre_sucursal);
+            sessionStorage.setItem('empleado', empleado);
+
+            alert(`¡Ingreso Autorizado!`);
+            if (empleado === "admin") {
+                window.location.href = 'admin.html';
+            } else {
+                window.location.href = 'vendedor.html';
+            }
+        }
+    </script>
+</body>
+</html>
