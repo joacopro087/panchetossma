@@ -1,56 +1,89 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-const db = new sqlite3.Database('./panchetos.db', (err) => {
-    if (err) console.error(err.message);
-    else console.log('Base de datos conectada.');
+// Conexión segura con Supabase usando la URL de internet
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }
 });
 
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS sucursales (id_sucursal INTEGER PRIMARY KEY, nombre TEXT)`);
-    db.run(`CREATE TABLE IF NOT EXISTS ventas (
-        id_venta INTEGER PRIMARY KEY AUTOINCREMENT,
-        id_sucursal INTEGER,
-        empleado TEXT,
-        producto TEXT,
-        cantidad INTEGER,
-        precio_unitario REAL,
-        total REAL,
-        fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+// Crear las tablas reales en internet al iniciar
+async function iniciarTablas() {
+    try {
+        await pool.query(`CREATE TABLE IF NOT EXISTS sucursales (id_sucursal INT PRIMARY KEY, nombre TEXT)`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS ventas (
+            id_venta SERIAL PRIMARY KEY,
+            id_sucursal INT,
+            empleado TEXT,
+            producto TEXT,
+            cantidad INT,
+            precio_unitario REAL,
+            total REAL,
+            fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`);
+        await pool.query(`CREATE TABLE IF NOT EXISTS stock (
+            id_sucursal INT PRIMARY KEY,
+            panes INT DEFAULT 1000,
+            salchichas INT DEFAULT 1000
+        )`);
 
-    db.get("SELECT COUNT(*) as count FROM sucursales", [], (err, row) => {
-        if (row && row.count === 0) {
-            db.run("INSERT INTO sucursales (id_sucursal, nombre) VALUES (1, 'Panchetos Pilar'), (2, 'Alta Gracia'), (3, 'Río Segundo'), (4, 'Panchetos al Paso'), (99, 'Administración')");
+        const res = await pool.query("SELECT COUNT(*) FROM sucursales");
+        if (parseInt(res.rows[0].count) === 0) {
+            await pool.query("INSERT INTO sucursales (id_sucursal, nombre) VALUES (1, 'Panchetos Pilar'), (2, 'Alta Gracia'), (3, 'Río Segundo'), (4, 'Panchetos al Paso'), (99, 'Administración')");
+            await pool.query("INSERT INTO stock (id_sucursal, panes, salchichas) VALUES (1, 1000, 1000), (2, 1000, 1000), (3, 1000, 1000), (4, 1000, 1000)");
         }
-    });
-});
+        console.log("Tablas en la nube verificadas y listas.");
+    } catch (err) {
+        console.error("Error al iniciar tablas:", err);
+    }
+}
+iniciarTablas();
 
-app.post('/api/ventas', (req, res) => {
+app.post('/api/ventas', async (req, res) => {
     const { id_sucursal, empleado, producto, cantidad, precio_unitario } = req.body;
     const total = cantidad * precio_unitario;
-    db.run(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES (?, ?, ?, ?, ?, ?)`,
-        [id_sucursal, empleado, producto, cantidad, precio_unitario, total], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ status: "ok" });
-        });
+
+    try {
+        await pool.query('BEGIN');
+        await pool.query(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [id_sucursal, empleado, producto, cantidad, precio_unitario, total]);
+        await pool.query(`UPDATE stock SET panes = panes - $1, salchichas = salchichas - $2 WHERE id_sucursal = $3`, 
+            [cantidad, cantidad, id_sucursal]);
+        await pool.query('COMMIT');
+        res.json({ status: "ok" });
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        res.status(500).json({ error: err.message });
+    }
 });
 
-app.get('/api/reportes', (req, res) => {
-    db.all(`SELECT s.nombre as sucursal, v.empleado, v.producto, SUM(v.cantidad) as total_panchos, SUM(v.total) as total_recaudado
+app.get('/api/reportes', async (req, res) => {
+    try {
+        const ventasRes = await pool.query(`SELECT s.nombre as sucursal, v.empleado, v.producto, SUM(v.cantidad) as total_panchos, SUM(v.total) as total_recaudado
             FROM ventas v JOIN sucursales s ON v.id_sucursal = s.id_sucursal
-            GROUP BY v.id_sucursal, v.empleado, v.producto`, [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+            GROUP BY s.nombre, v.empleado, v.producto`);
+        const stockRes = await pool.query(`SELECT st.*, s.nombre FROM stock st JOIN sucursales s ON st.id_sucursal = s.id_sucursal`);
+        res.json({ ventas: ventasRes.rows, stock: stockRes.rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
-const PORT = 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor activo en http://localhost:${PORT}/login.html`);
+app.post('/api/stock/recargar', async (req, res) => {
+    const { id_sucursal, cantidad_panes, cantidad_salchichas } = req.body;
+    try {
+        await pool.query(`UPDATE stock SET panes = panes + $1, salchichas = salchichas + $2 WHERE id_sucursal = $3`,
+            [cantidad_panes, cantidad_salchichas, id_sucursal]);
+        res.json({ status: "Stock actualizado" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor activo`));
