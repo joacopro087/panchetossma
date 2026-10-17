@@ -6,17 +6,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión automática con la base de datos interna de Render PostgreSQL
+// Conexión automática con la base de datos de Render
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Crear la estructura de tablas al iniciar el sistema si no existen
+// Crear tablas en limpio
 async function iniciarTablas() {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS sucursales (id_sucursal INT PRIMARY KEY, nombre TEXT)`);
-        
         await pool.query(`CREATE TABLE IF NOT EXISTS ventas (
             id_venta SERIAL PRIMARY KEY,
             id_sucursal INT,
@@ -27,8 +26,6 @@ async function iniciarTablas() {
             total REAL,
             fecha_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`);
-        
-        // Tabla de stock considerando docenas de pan y unidades para el resto
         await pool.query(`CREATE TABLE IF NOT EXISTS stock (
             id_sucursal INT PRIMARY KEY,
             docenas_pan REAL DEFAULT 100.0,
@@ -37,20 +34,18 @@ async function iniciarTablas() {
             gaseosas_15 INT DEFAULT 100
         )`);
 
-        // Insertar los locales reales del negocio la primera vez
         const res = await pool.query("SELECT COUNT(*) FROM sucursales");
         if (parseInt(res.rows[0].count) === 0) {
             await pool.query("INSERT INTO sucursales (id_sucursal, nombre) VALUES (1, 'Panchetos Pilar'), (2, 'Alta Gracia'), (3, 'Río Segundo'), (4, 'Panchetos al Paso'), (99, 'Administración')");
             await pool.query("INSERT INTO stock (id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15) VALUES (1, 100.0, 1000, 200, 100), (2, 100.0, 1000, 200, 100), (3, 100.0, 1000, 200, 100), (4, 100.0, 1000, 200, 100)");
         }
-        console.log("¡Tablas y sucursales de Panchetos sincronizadas correctamente!");
+        console.log("Base de datos de Render PostgreSQL activa y sin errores.");
     } catch (err) {
-        console.error("Error al iniciar las tablas de la base de datos:", err);
+        console.error("Error al iniciar tablas:", err);
     }
 }
 iniciarTablas();
 
-// API: Registrar Venta / Consumo de Dueño y descontar Stock de forma inteligente
 app.post('/api/ventas', async (req, res) => {
     const { id_sucursal, empleado, producto, cantidad, precio_unitario } = req.body;
     const total = cantidad * precio_unitario;
@@ -60,10 +55,7 @@ app.post('/api/ventas', async (req, res) => {
     let gaseosa500ADescontar = 0;
     let gaseosa15ADescontar = 0;
 
-    // Equivalencia matemática exacta: 1 pan de pancho es 1/12 de docena (0.0833)
     const unPanEnDocena = 1 / 12;
-
-    // Normalizar el nombre para evaluar el stock sin importar si es venta o consumo gratis del dueño
     const productoBase = producto.replace(' (CONSUMO DUEÑO)', '');
 
     if (productoBase === 'Pancho Común' || productoBase === 'Pancho Guacamole Doritos') {
@@ -71,21 +63,18 @@ app.post('/api/ventas', async (req, res) => {
         salchichasADescontar = cantidad;
     } else if (productoBase === 'Pancho Doble') {
         panesADescontar = unPanEnDocena * cantidad;
-        salchichasADescontar = cantidad * 2; // El doble consume 2 salchichas y 1 pan
+        salchichasADescontar = cantidad * 2;
     } else if (productoBase === 'Gaseosa 500ml') {
         gaseosa500ADescontar = cantidad;
     } else if (productoBase === 'Gaseosa 1.5L') {
         gaseosa15ADescontar = cantidad;
-    } // Las porciones de papas no descuentan insumos de panadería ni fiambrería
+    }
 
     try {
         await pool.query('BEGIN');
-        
-        // Registrar la operación en el historial general
         await pool.query(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES ($1, $2, $3, $4, $5, $6)`,
             [id_sucursal, empleado, producto, cantidad, precio_unitario, total]);
         
-        // Actualizar inventario restando solo los materiales que correspondan
         await pool.query(`UPDATE stock SET 
             docenas_pan = docenas_pan - $1, 
             salchichas = salchichas - $2,
@@ -102,22 +91,18 @@ app.post('/api/ventas', async (req, res) => {
     }
 });
 
-// API: Obtener Reportes de Facturación y cantidades de Inventario para el Dueño
 app.get('/api/reportes', async (req, res) => {
     try {
         const ventasRes = await pool.query(`SELECT s.nombre as sucursal, v.empleado, v.producto, SUM(v.cantidad) as total_panchos, SUM(v.total) as total_recaudado
             FROM ventas v JOIN sucursales s ON v.id_sucursal = s.id_sucursal
             GROUP BY s.nombre, v.empleado, v.producto`);
-            
         const stockRes = await pool.query(`SELECT st.*, s.nombre FROM stock st JOIN sucursales s ON st.id_sucursal = s.id_sucursal ORDER BY st.id_sucursal`);
-        
         res.json({ ventas: ventasRes.rows, stock: stockRes.rows });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// API: Recargar mercadería desde el panel del Dueño (Suma stock al existente)
 app.post('/api/stock/recargar', async (req, res) => {
     const { id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 } = req.body;
     try {
@@ -128,31 +113,22 @@ app.post('/api/stock/recargar', async (req, res) => {
             gaseosas_15 = gaseosas_15 + $4
             WHERE id_sucursal = $5`,
             [docenas_pan, salchichas, gaseosas_500, gaseosas_15, id_sucursal]);
-        res.json({ status: "Stock recargado correctamente" });
+        res.json({ status: "ok" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// API: Forzar / Establecer el conteo real del almacén (Usado por las chicas en apertura)
 app.post('/api/stock/establecer', async (req, res) => {
     const { id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 } = req.body;
     try {
-        await pool.query(`UPDATE stock SET 
-            docenas_pan = $1, 
-            salchichas = $2, 
-            gaseosas_500 = $3, 
-            gaseosas_15 = $4 
-            WHERE id_sucursal = $5`,
+        await pool.query(`UPDATE stock SET docenas_pan = $1, salchichas = $2, gaseosas_500 = $3, gaseosas_15 = $4 WHERE id_sucursal = $5`,
             [docenas_pan, salchichas, gaseosas_500, gaseosas_15, id_sucursal]);
-        res.json({ status: "Stock de apertura fijado" });
+        res.json({ status: "ok" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// Arrancar la escucha en el puerto asignado dinámicamente por la nube de Render
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor de Panchetos centralizado y corriendo en el puerto ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Servidor activo`));

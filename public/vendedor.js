@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     obtenerStockActual();
 });
 
-// Traer los valores de la base de datos para mostrárselos a las chicas en los casilleros
 async function obtenerStockActual() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     try {
@@ -23,23 +22,22 @@ async function obtenerStockActual() {
         
         const miStock = datos.stock.find(local => local.id_sucursal == id_sucursal);
         if (miStock) {
-            document.getElementById('invPan').value = Number(miStock.docenas_pan).toFixed(1);
-            document.getElementById('invSalchichas').value = miStock.salchichas;
-            document.getElementById('invG500').value = miStock.gaseosas_500;
-            document.getElementById('invG15').value = miStock.gaseosas_15;
+            document.getElementById('boxpan').value = Number(miStock.docenas_pan).toFixed(1);
+            document.getElementById('boxsalchichas').value = miStock.salchichas;
+            document.getElementById('boxg500').value = miStock.gaseosas_500;
+            document.getElementById('boxg15').value = miStock.gaseosas_15;
         }
     } catch (error) {
-        console.error("Error de stock:", error);
+        console.error("Error al cargar inventario:", error);
     }
 }
 
-// Permitir que las chicas pongan a mano cuánto hay realmente al empezar
 async function establecerStockInicial() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
-    const docenas_pan = parseFloat(document.getElementById('invPan').value) || 0;
-    const salchichas = parseInt(document.getElementById('invSalchichas').value) || 0;
-    const gaseosas_500 = parseInt(document.getElementById('invG500').value) || 0;
-    const gaseosas_15 = parseInt(document.getElementById('invG15').value) || 0;
+    const docenas_pan = parseFloat(document.getElementById('boxpan').value) || 0;
+    const salchichas = parseInt(document.getElementById('boxsalchichas').value) || 0;
+    const gaseosas_500 = parseInt(document.getElementById('boxg500').value) || 0;
+    const gaseosas_15 = parseInt(document.getElementById('boxg15').value) || 0;
 
     try {
         const respuesta = await fetch('/api/stock/establecer', {
@@ -49,17 +47,18 @@ async function establecerStockInicial() {
         });
         if (respuesta.ok) {
             alert('¡Inventario de almacén registrado con éxito para hoy!');
+            obtenerStockActual();
+        } else {
+            alert('Error al guardar datos en la base de datos.');
         }
     } catch (error) {
-        alert('Error al sincronizar el inventario.');
+        alert('Error de red al intentar sincronizar.');
     }
 }
 
 async function registrarOperacion(nombreProducto, precio, tipo) {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const empleado = sessionStorage.getItem('empleado');
-    
-    // Si es gratis, el nombre del producto se guarda con una marca especial en los reportes
     const productoFinal = tipo === 'gratis' ? `${nombreProducto} (CONSUMO DUEÑO)` : nombreProducto;
 
     const ventaData = {
@@ -82,7 +81,7 @@ async function registrarOperacion(nombreProducto, precio, tipo) {
             } else {
                 alert(`¡${nombreProducto} anotado con éxito!`);
             }
-            obtenerStockActual(); // Refrescar stock en pantalla
+            obtenerStockActual();
         }
     } catch (error) {
         alert('Sin conexión con el servidor central.');
