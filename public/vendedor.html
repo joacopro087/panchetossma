@@ -6,17 +6,29 @@
     <title>Panchetos - Caja Activa</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #fdf6e2; margin: 0; padding: 20px; text-align: center; }
-        .info-barra { background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; max-width: 900px; margin: 0 auto 20px auto; }
+        .info-barra { background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; max-width: 950px; margin: 0 auto 10px auto; }
         .info-barra span { font-weight: bold; color: #f0ad4e; }
+        
+        /* PANEL DE INVENTARIO DIARIO */
+        .panel-inventario { background: #fff; border: 2px solid #333; padding: 15px; border-radius: 8px; max-width: 950px; margin: 0 auto 20px auto; text-align: left; }
+        .panel-inventario h4 { margin: 0 0 10px 0; color: #333; font-size: 16px; }
+        .inputs-stock { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .inputs-stock input { width: 100px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .btn-ajustar { background: #333; color: white; border: none; padding: 7px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
         .btn-salir { background: #d9534f; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         h1 { color: #d9534f; margin-top: 10px; font-size: 32px; }
-        h2.seccion-titulo { color: #333; border-bottom: 2px solid #f0ad4e; max-width: 900px; margin: 30px auto 15px auto; padding-bottom: 5px; text-align: left; }
-        .grid-panchos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; max-width: 900px; margin: 0 auto; }
+        h2.seccion-titulo { color: #333; border-bottom: 2px solid #f0ad4e; max-width: 950px; margin: 30px auto 15px auto; padding-bottom: 5px; text-align: left; }
+        .grid-panchos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 950px; margin: 0 auto; }
         .card-pancho { background: white; border: 3px solid #f0ad4e; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 10px;}
-        .card-pancho h3 { margin: 0 0 10px 0; font-size: 22px; color: #333; }
-        .precio { font-size: 28px; font-weight: bold; color: #d9534f; margin-bottom: 15px; display: block; }
-        .btn-vender { background: #5cb85c; color: white; border: none; padding: 14px 20px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn-vender:hover { background: #4cae4c; transform: scale(1.02); }
+        .card-pancho h3 { margin: 0 0 5px 0; font-size: 22px; color: #333; }
+        .precio { font-size: 26px; font-weight: bold; color: #d9534f; margin-bottom: 10px; display: block; }
+        
+        /* BOTONES DE VENTA Y GRATIS */
+        .btn-vender { background: #5cb85c; color: white; border: none; padding: 12px 10px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; margin-bottom: 8px; }
+        .btn-vender:hover { background: #4cae4c; transform: scale(1.01); }
+        .btn-gratis { background: #777; color: white; border: none; padding: 8px 10px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn-gratis:hover { background: #555; }
     </style>
 </head>
 <body>
@@ -26,62 +38,86 @@
         <button class="btn-salir" onclick="cerrarSesion()">Cerrar Caja</button>
     </div>
 
-    <h1>🌭 Registrar Venta - Panchetos Menú</h1>
+    <!-- REGISTRO DE STOCK AL EMPEZAR EL DÍA -->
+    <div class="panel-inventario">
+        <h4>📋 Inventario de Apertura / Control de Almacén</h4>
+        <div class="inputs-stock">
+            <label>Pan (Dozenas): <input type="number" step="0.1" id="invPan"></label>
+            <label>Salchichas (U): <input type="number" id="invSalchichas"></label>
+            <label>Gaseosas 500: <input type="number" id="invG500"></label>
+            <label>Gaseosas 1.5L: <input type="number" id="invG15"></label>
+            <button class="btn-ajustar" onclick="establecerStockInicial()">💾 Confirmar Stock Inicial</button>
+        </div>
+    </div>
+
+    <h1>🌭 Registrar Operación - Panchetos</h1>
     
+    <!-- SECCIÓN PANCHOS -->
     <h2 class="seccion-titulo">🌭 Panchos</h2>
     <div class="grid-panchos">
         <div class="card-pancho">
             <h3>Pancho Común</h3>
             <span class="precio">$5.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Pancho Común', 5000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Pancho Común', 5000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Pancho Común', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Pancho Doble</h3>
             <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Pancho Doble', 7000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Pancho Doble', 7000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Pancho Doble', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Guacamole Doritos</h3>
             <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Pancho Guacamole Doritos', 7000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Pancho Guacamole Doritos', 7000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Pancho Guacamole Doritos', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
     </div>
 
+    <!-- SECCIÓN PAPAS -->
     <h2 class="seccion-titulo">🍟 Papas Fritas</h2>
     <div class="grid-panchos">
         <div class="card-pancho">
             <h3>Cono Papas</h3>
             <span class="precio">$4.500</span>
-            <button class="btn-vender" onclick="registrarPancho('Cono Papas', 4500)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Cono Papas', 4500, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Cono Papas', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Porción Papas (1 pers)</h3>
             <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Porción Papas (1 pers)', 7000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (1 pers)', 7000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (1 pers)', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Porción Papas (2 pers)</h3>
             <span class="precio">$8.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Porción Papas (2 pers)', 8000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (2 pers)', 8000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (2 pers)', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Porción Papas (4 pers)</h3>
             <span class="precio">$12.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Porción Papas (4 pers)', 12000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (4 pers)', 12000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (4 pers)', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
     </div>
 
+    <!-- SECCIÓN BEBIDAS -->
     <h2 class="seccion-titulo">🥤 Bebidas</h2>
     <div class="grid-panchos">
         <div class="card-pancho">
             <h3>Gaseosa 500ml</h3>
             <span class="precio">$3.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Gaseosa 500ml', 3000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Gaseosa 500ml', 3000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Gaseosa 500ml', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
         <div class="card-pancho">
             <h3>Gaseosa 1.5L</h3>
             <span class="precio">$5.000</span>
-            <button class="btn-vender" onclick="registrarPancho('Gaseosa 1.5L', 5000)">⚡ Registrar 1</button>
+            <button class="btn-vender" onclick="registrarOperacion('Gaseosa 1.5L', 5000, 'venta')">⚡ Registrar Venta</button>
+            <button class="btn-gratis" onclick="registrarOperacion('Gaseosa 1.5L', 0, 'gratis')">🎁 Consumo Dueño (Gratis)</button>
         </div>
     </div>
 
