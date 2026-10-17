@@ -78,7 +78,7 @@ app.post('/api/ventas', async (req, res) => {
         panesADescontar = unPanEnDocena * cantidad;
         salchichasADescontar = cantidad * 2; // El doble consume 2 salchichas y 1 pan
     } else if (productoBase === 'Gaseosa 500ml') {
-        gaseosa500ADescontar = quantity;
+        gaseosa500ADescontar = cantidad; // CORREGIDO: cambiado de quantity a cantidad
     } else if (productoBase === 'Gaseosa 1.5L') {
         gaseosa15ADescontar = cantidad;
     } // Las porciones de papas no descuentan insumos de panadería ni fiambrería
@@ -145,7 +145,6 @@ app.post('/api/stock/recargar', async (req, res) => {
 app.post('/api/stock/establecer', async (req, res) => {
     const { id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 } = req.body;
     try {
-        // CORREGIDO: Eliminada palabra errónea en esta línea
         await pool.query(`UPDATE stock SET docenas_pan = $1, salchichas = $2, gaseosas_500 = $3, gaseosas_15 = $4 WHERE id_sucursal = $5`,
             [docenas_pan, salchichas, gaseosas_500, gaseosas_15, id_sucursal]);
         res.json({ status: "ok" });
