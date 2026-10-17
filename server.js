@@ -6,13 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión segura con Supabase usando la URL de internet
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Crear las tablas reales en internet al iniciar
 async function iniciarTablas() {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS sucursales (id_sucursal INT PRIMARY KEY, nombre TEXT)`);
@@ -33,11 +31,11 @@ async function iniciarTablas() {
         )`);
 
         const res = await pool.query("SELECT COUNT(*) FROM sucursales");
-        if (parseInt(res.rows[0].count) === 0) {
+        if (parseInt(res.rows.count) === 0) {
             await pool.query("INSERT INTO sucursales (id_sucursal, nombre) VALUES (1, 'Panchetos Pilar'), (2, 'Alta Gracia'), (3, 'Río Segundo'), (4, 'Panchetos al Paso'), (99, 'Administración')");
             await pool.query("INSERT INTO stock (id_sucursal, panes, salchichas) VALUES (1, 1000, 1000), (2, 1000, 1000), (3, 1000, 1000), (4, 1000, 1000)");
         }
-        console.log("Tablas en la nube verificadas y listas.");
+        console.log("Base de datos de Panchetos lista con stock inteligente.");
     } catch (err) {
         console.error("Error al iniciar tablas:", err);
     }
@@ -48,12 +46,29 @@ app.post('/api/ventas', async (req, res) => {
     const { id_sucursal, empleado, producto, cantidad, precio_unitario } = req.body;
     const total = cantidad * precio_unitario;
 
+    // Configuración base de stock a descontar
+    let panesADescontar = 0;
+    let salchichasADescontar = 0;
+
+    // Lógica inteligente de stock segun el producto real vendido
+    if (producto === 'Pancho Común' || producto === 'Pancho Guacamole Doritos') {
+        panesADescontar = cantidad;
+        salchichasADescontar = cantidad;
+    } else if (producto === 'Pancho Doble') {
+        panesADescontar = cantidad;
+        salchichasADescontar = cantidad * 2; // El doble consume dos salchichas
+    } 
+    // Si se vende Gaseosa o Papas solas, los valores quedan en 0 y no restan stock
+
     try {
         await pool.query('BEGIN');
         await pool.query(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES ($1, $2, $3, $4, $5, $6)`,
             [id_sucursal, empleado, producto, cantidad, precio_unitario, total]);
-        await pool.query(`UPDATE stock SET panes = panes - $1, salchichas = salchichas - $2 WHERE id_sucursal = $3`, 
-            [cantidad, cantidad, id_sucursal]);
+        
+        if (panesADescontar > 0 || salchichasADescontar > 0) {
+            await pool.query(`UPDATE stock SET panes = panes - $1, salchichas = salchichas - $2 WHERE id_sucursal = $3`, 
+                [panesADescontar, salchichasADescontar, id_sucursal]);
+        }
         await pool.query('COMMIT');
         res.json({ status: "ok" });
     } catch (err) {
@@ -67,7 +82,7 @@ app.get('/api/reportes', async (req, res) => {
         const ventasRes = await pool.query(`SELECT s.nombre as sucursal, v.empleado, v.producto, SUM(v.cantidad) as total_panchos, SUM(v.total) as total_recaudado
             FROM ventas v JOIN sucursales s ON v.id_sucursal = s.id_sucursal
             GROUP BY s.nombre, v.empleado, v.producto`);
-        const stockRes = await pool.query(`SELECT st.*, s.nombre FROM stock st JOIN sucursales s ON st.id_sucursal = s.id_sucursal`);
+        const stockRes = await pool.query(`SELECT st.*, s.nombre FROM stock st JOIN sucursales s ON st.id_sucursal = s.id_sucursal ORDER BY st.id_sucursal`);
         res.json({ ventas: ventasRes.rows, stock: stockRes.rows });
     } catch (err) {
         res.status(500).json({ error: err.message });
