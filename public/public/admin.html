@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panchetos - Panel Dueño</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f6f9; margin: 0; padding: 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #d9534f; padding-bottom: 10px; margin-bottom: 30px; }
+        h1 { color: #333; margin: 0; }
+        .btn-refresh { background: #5bc0de; color: white; border: none; padding: 10px 20px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .card-reporte { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #d9534f; color: white; }
+        .badge-sucursal { background: #f0ad4e; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📊 Ventas Totales por Sucursal y Empleado</h1>
+        <button class="btn-refresh" onclick="cargarMétricas()">🔄 Actualizar Reporte</button>
+    </div>
+    <div class="card-reporte">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Cajero/a</th>
+                    <th>Variedad Vendida</th>
+                    <th>Cantidad</th>
+                    <th>Total Recaudado</th>
+                </tr>
+            </thead>
+            <tbody id="tablaAdmin"></tbody>
+        </table>
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html>
