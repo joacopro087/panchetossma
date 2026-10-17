@@ -20,12 +20,14 @@ async function obtenerStockActual() {
         const respuesta = await fetch('/api/reportes');
         const datos = await respuesta.json();
         
+        // Buscamos la sucursal actual dentro de la base de datos
         const miStock = datos.stock.find(local => local.id_sucursal == id_sucursal);
         if (miStock) {
-            document.getElementById('boxpan').value = Number(miStock.docenas_pan).toFixed(1);
-            document.getElementById('boxsalchichas').value = miStock.salchichas;
-            document.getElementById('boxg500').value = miStock.gaseosas_500;
-            document.getElementById('boxg15').value = miStock.gaseosas_15;
+            // Aseguramos que los nombres coincidan exactamente con la base de datos de PostgreSQL
+            document.getElementById('boxpan').value = miStock.docenas_pan ? Number(miStock.docenas_pan).toFixed(1) : "0.0";
+            document.getElementById('boxsalchichas').value = miStock.salchichas !== undefined ? miStock.salchichas : 0;
+            document.getElementById('boxg500').value = miStock.gaseosas_500 !== undefined ? miStock.gaseosas_500 : 0;
+            document.getElementById('boxg15').value = miStock.gaseosas_15 !== undefined ? miStock.gaseosas_15 : 0;
         }
     } catch (error) {
         console.error("Error al cargar inventario:", error);

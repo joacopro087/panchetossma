@@ -6,13 +6,13 @@ const app = express();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conexión automática con la base de datos de Render
+// Conexión automática con la base de datos de Render PostgreSQL
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
 
-// Crear tablas en limpio
+// Inicialización limpia de las tablas en la nube
 async function iniciarTablas() {
     try {
         await pool.query(`CREATE TABLE IF NOT EXISTS sucursales (id_sucursal INT PRIMARY KEY, nombre TEXT)`);
@@ -39,13 +39,14 @@ async function iniciarTablas() {
             await pool.query("INSERT INTO sucursales (id_sucursal, nombre) VALUES (1, 'Panchetos Pilar'), (2, 'Alta Gracia'), (3, 'Río Segundo'), (4, 'Panchetos al Paso'), (99, 'Administración')");
             await pool.query("INSERT INTO stock (id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15) VALUES (1, 100.0, 1000, 200, 100), (2, 100.0, 1000, 200, 100), (3, 100.0, 1000, 200, 100), (4, 100.0, 1000, 200, 100)");
         }
-        console.log("Base de datos de Render PostgreSQL activa y sin errores.");
+        console.log("Base de datos de Render PostgreSQL activa y lista.");
     } catch (err) {
         console.error("Error al iniciar tablas:", err);
     }
 }
 iniciarTablas();
 
+// API VENTAS: Registra transacciones seguras pidiendo un cliente exclusivo al pool
 app.post('/api/ventas', async (req, res) => {
     const { id_sucursal, empleado, producto, cantidad, precio_unitario } = req.body;
     const total = cantidad * precio_unitario;
@@ -70,12 +71,15 @@ app.post('/api/ventas', async (req, res) => {
         gaseosa15ADescontar = cantidad;
     }
 
+    // Pedimos una conexión exclusiva para transacciones (Patrón Checkout Seguro)
+    const client = await pool.connect();
     try {
-        await pool.query('BEGIN');
-        await pool.query(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES ($1, $2, $3, $4, $5, $6)`,
+        await client.query('BEGIN');
+        
+        await client.query(`INSERT INTO ventas (id_sucursal, empleado, producto, cantidad, precio_unitario, total) VALUES ($1, $2, $3, $4, $5, $6)`,
             [id_sucursal, empleado, producto, cantidad, precio_unitario, total]);
         
-        await pool.query(`UPDATE stock SET 
+        await client.query(`UPDATE stock SET 
             docenas_pan = docenas_pan - $1, 
             salchichas = salchichas - $2,
             gaseosas_500 = gaseosas_500 - $3,
@@ -83,14 +87,18 @@ app.post('/api/ventas', async (req, res) => {
             WHERE id_sucursal = $5`, 
             [panesADescontar, salchichasADescontar, gaseosa500ADescontar, gaseosa15ADescontar, id_sucursal]);
             
-        await pool.query('COMMIT');
+        await client.query('COMMIT');
         res.json({ status: "ok" });
     } catch (err) {
-        await pool.query('ROLLBACK');
+        await client.query('ROLLBACK');
+        console.error(err);
         res.status(500).json({ error: err.message });
+    } finally {
+        client.release(); // ¡Fundamental! Devuelve la conexión al pool para que no se congele
     }
 });
 
+// API REPORTES
 app.get('/api/reportes', async (req, res) => {
     try {
         const ventasRes = await pool.query(`SELECT s.nombre as sucursal, v.empleado, v.producto, SUM(v.cantidad) as total_panchos, SUM(v.total) as total_recaudado
@@ -103,6 +111,7 @@ app.get('/api/reportes', async (req, res) => {
     }
 });
 
+// API RECARGAR STOCK (Corregido error de tipeo)
 app.post('/api/stock/recargar', async (req, res) => {
     const { id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 } = req.body;
     try {
@@ -119,6 +128,7 @@ app.post('/api/stock/recargar', async (req, res) => {
     }
 });
 
+// API ESTABLECER STOCK INICIAL
 app.post('/api/stock/establecer', async (req, res) => {
     const { id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 } = req.body;
     try {
@@ -131,4 +141,4 @@ app.post('/api/stock/establecer', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor activo`));
+app.listen(PORT, '0.0.0.0', () => console.log(`Servidor activo`));
