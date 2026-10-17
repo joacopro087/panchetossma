@@ -6,10 +6,10 @@ async function cargarMétricas() {
         const respuesta = await fetch('/api/reportes');
         const datos = await respuesta.json();
         
-        // 1. Pintar Ventas
+        // 1. Pintar Ventas actuales que no fueron borradas de la base de datos
         tablaVentas.innerHTML = '';
-        if (datos.ventas.length === 0) {
-            tablaVentas.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay ventas registradas.</td></tr>';
+        if (!datos.ventas || datos.ventas.length === 0) {
+            tablaVentas.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No hay ventas registradas en este momento. Todas las cajas están cerradas y purgadas.</td></tr>';
         } else {
             datos.ventas.forEach(fila => {
                 const tr = document.createElement('tr');
@@ -18,31 +18,32 @@ async function cargarMétricas() {
                     <td>${fila.empleado.toUpperCase()}</td>
                     <td><b>${fila.producto}</b></td>
                     <td>${fila.total_panchos} u.</td>
-                    <td>$${fila.total_recaudado.toLocaleString()}</td>
+                    <td>$${fila.total_recaudado.toLocaleString('es-AR')}</td>
                 `;
                 tablaVentas.appendChild(tr);
             });
         }
 
-        // 2. Pintar Insumos Reales
+        // 2. Pintar Insumos Reales de Almacén por Sucursal
         tablaStock.innerHTML = '';
-        datos.stock.forEach(local => {
-            const tr = document.createElement('tr');
-            // Redondear las docenas a un decimal para que sea legible (ej: 12.5 docenas)
-            let panFormateado = Number(local.docenas_pan).toFixed(1);
-            
-            tr.innerHTML = `
-                <td><b>${local.nombre}</b></td>
-                <td><b>${panFormateado} doz.</b></td>
-                <td>${local.salchichas} u.</td>
-                <td>${local.gaseosas_500} u.</td>
-                <td>${local.gaseosas_15} u.</td>
-            `;
-            tablaStock.appendChild(tr);
-        });
+        if (datos.stock) {
+            datos.stock.forEach(local => {
+                const tr = document.createElement('tr');
+                let panFormateado = Number(local.docenas_pan).toFixed(1);
+                
+                tr.innerHTML = `
+                    <td><b>${local.nombre}</b></td>
+                    <td><b>${panFormateado} doz.</b></td>
+                    <td>${local.salchichas} u.</td>
+                    <td>${local.gaseosas_500} u.</td>
+                    <td>${local.gaseosas_15} u.</td>
+                `;
+                tablaStock.appendChild(tr);
+            });
+        }
 
     } catch (error) {
-        console.error("Error al traer reportes:", error);
+        console.error("Error al traer reportes de facturación:", error);
     }
 }
 
@@ -53,20 +54,25 @@ async function enviarMercaderia() {
     const gaseosas_500 = parseInt(document.getElementById('recargaG500').value) || 0;
     const gaseosas_15 = parseInt(document.getElementById('recargaG15').value) || 0;
 
-    const respuesta = await fetch('/api/stock/recargar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 })
-    });
+    try {
+        const respuesta = await fetch('/api/stock/recargar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 })
+        });
 
-    if (respuesta.ok) {
-        alert("¡Insumos agregados con éxito!");
-        document.getElementById('recargaPan').value = '';
-        document.getElementById('recargaSalchichas').value = '';
-        document.getElementById('recargaG500').value = '';
-        document.getElementById('recargaG15').value = '';
-        cargarMétricas();
+        if (respuesta.ok) {
+            alert("¡Insumos enviados y agregados al almacén con éxito!");
+            document.getElementById('recargaPan').value = '';
+            document.getElementById('recargaSalchichas').value = '';
+            document.getElementById('recargaG500').value = '';
+            document.getElementById('recargaG15').value = '';
+            cargarMétricas();
+        }
+    } catch (error) {
+        alert("Error de conexión al intentar enviar mercadería.");
     }
 }
 
+// Arrancar la carga automática de datos apenas el dueño abre el panel
 document.addEventListener('DOMContentLoaded', cargarMétricas);
