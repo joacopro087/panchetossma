@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const empleado = sessionStorage.getItem('empleado');
 
     if (!id_sucursal || !empleado) {
-        alert('Acceso denegado. Identifícate primero.');
         window.location.href = 'login.html';
         return;
     }
@@ -74,11 +73,11 @@ async function establecerStockInicial() {
             body: JSON.stringify({ id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 })
         });
         if (respuesta.ok) {
-            alert('¡Inventario de almacén registrado con éxito para hoy!');
+            // Cartel removido para agilizar la apertura
             obtenerStockActual();
         }
     } catch (error) {
-        alert('Error al sincronizar.');
+        console.error('Error al sincronizar.');
     }
 }
 
@@ -86,12 +85,10 @@ async function registrarOperacion(nombreProducto, precio, tipo) {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const empleado = sessionStorage.getItem('empleado');
     
-    // Capturar el valor del multiplicador libre de la pantalla (de 2 a infinito)
     const inputCantidad = document.getElementById('multiplicadorVenta');
     const cantidadSeleccionada = parseInt(inputCantidad.value) || 1;
 
     if (cantidadSeleccionada < 1) {
-        alert("La cantidad debe ser mayor o igual a 1.");
         return;
     }
 
@@ -101,7 +98,7 @@ async function registrarOperacion(nombreProducto, precio, tipo) {
         id_sucursal: parseInt(id_sucursal),
         empleado: empleado,
         producto: productoFinal,
-        cantidad: cantidadSeleccionada, // Mandamos la cantidad libre
+        cantidad: cantidadSeleccionada,
         precio_unitario: precio
     };
 
@@ -112,13 +109,13 @@ async function registrarOperacion(nombreProducto, precio, tipo) {
             body: JSON.stringify(ventaData)
         });
         if (respuesta.ok) {
-            // Reiniciar el casillero multiplicador a 1 automáticamente por seguridad
+            // Se quitó el aviso de éxito: ahora limpia el casillero y actualiza las tablas al instante en silencio
             inputCantidad.value = 1;
             obtenerStockActual();
             obtenerVentasDelTurno();
         }
     } catch (error) {
-        alert('Sin conexión.');
+        console.error('Sin conexión.');
     }
 }
 
@@ -155,14 +152,14 @@ async function prepararTicketParaFoto() {
 
         document.getElementById('modalTicket').style.display = 'flex';
     } catch (error) {
-        alert('Error al procesar el recibo para la foto.');
+        console.error('Error al procesar el recibo para la foto.');
     }
 }
 
 async function borrarVentasYLoguearOut() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
 
-    if (!confirm("⚠️ ¿ATENCIÓN! Al aceptar, todas las ventas de hoy se borrarán para siempre del servidor y no habrá vuelta atrás. ¿Ya sacaste la foto?")) {
+    if (!confirm("⚠️ ¿Estás seguro? Se borrarán todas las ventas de hoy para siempre del servidor. ¿Ya sacaron la foto?")) {
         return;
     }
 
@@ -174,12 +171,11 @@ async function borrarVentasYLoguearOut() {
         });
         
         if (respuesta.ok) {
-            alert('🔥 Caja purgada. Las ventas se eliminaron del servidor para siempre. Iniciando próximo turno en \$0.');
             sessionStorage.clear();
             window.location.href = 'login.html';
         }
     } catch (error) {
-        alert('Error al intentar purgar la base de datos.');
+        console.error('Error al intentar purgar la base de datos.');
     }
 }
 
