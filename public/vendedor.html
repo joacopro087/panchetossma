@@ -9,7 +9,6 @@
         .info-barra { background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; max-width: 1200px; margin: 0 auto 10px auto; }
         .info-barra span { font-weight: bold; color: #f0ad4e; }
         
-        /* CONTENEDOR EN DOS COLUMNAS: MENÚ Y CARRITO */
         .contenedor-principal { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
         .columna-izquierda { flex: 2; }
         .columna-derecha { flex: 1; background: white; border: 3px solid #333; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: sticky; top: 20px; }
@@ -22,21 +21,21 @@
         h2.seccion-titulo { color: #333; border-bottom: 2px solid #f0ad4e; margin: 25px 0 15px 0; padding-bottom: 5px; text-align: left; }
         .grid-panchos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
         .card-pancho { background: white; border: 3px solid #f0ad4e; border-radius: 12px; padding: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
-        .card-pancho h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
+        .card-pancho h3 { margin: 0 0 5px 0; font-size: 17px; color: #333; }
         .precio { font-size: 22px; font-weight: bold; color: #d9534f; margin-bottom: 10px; display: block; }
         
         .btn-vender { background: #f0ad4e; color: white; border: none; padding: 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; }
         .btn-vender:hover { background: #ec971f; }
         .btn-gratis { background: #777; color: white; border: none; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; }
-        .btn-promo { background: #e05d44; color: white; border: none; padding: 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; }
+        .btn-promo { background: #e05d44; color: white; border: none; padding: 10px; font-size: 14px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; }
+        .btn-promo-destacada { background: #5cb85c; color: white; border: none; padding: 12px 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; box-shadow: 0 3px 0 #4cae4c; }
+        .btn-promo-destacada:hover { background: #4cae4c; }
 
-        /* ESTILOS DEL ARMADOR DE PEDIDOS */
         .lista-pedido { min-height: 150px; border-bottom: 2px dashed #ccc; margin-bottom: 15px; padding-bottom: 10px; }
         .item-carrito { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; border-bottom: 1px solid #f4f4f4; }
         .btn-quitar { color: #d9534f; background: none; border: none; font-weight: bold; cursor: pointer; margin-left: 5px; }
         .total-pedido-caja { font-size: 24px; font-weight: bold; text-align: center; color: #333; margin: 15px 0; }
         .btn-finalizar { background: #5cb85c; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-finalizar:hover { background: #4cae4c; transform: scale(1.02); }
         .btn-cancelar { background: none; color: #777; border: none; cursor: pointer; margin-top: 10px; text-decoration: underline; width: 100%; font-size: 13px; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
@@ -57,13 +56,64 @@
     <h1>🌭 Sistema de Pedidos - Panchetos</h1>
 
     <div class="contenedor-principal">
-        <!-- COLUMNA IZQUIERDA: MENÚ DE BOTONES -->
         <div class="columna-izquierda">
             <div class="panel-multiplicador">
                 <label>✖️ MULTIPLICADOR DE UNIDADES:</label>
                 <input type="number" id="multiplicadorVenta" min="1" value="1">
-                <span style="font-size: 11px;">(Suma de a varias unidades al pedido actual)</span>
+                <span style="font-size: 11px;">(Suma varias unidades al pedido actual)</span>
             </div>
+
+            <!-- 🔥 SECCIÓN NUEVA: PROMOS DE LAS FOTOS ARRIBA DE TODO -->
+            <h2 class="seccion-titulo" style="color: #d9534f;">🔥 COMBOS Y PROMOS DESTACADAS</h2>
+            
+            <h3 style="text-align: left; margin: 10px 0; color: #666;">✨ Combos Panchetos + Papas (Foto 1)</h3>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>1 Pancheto + Cono Papas</h3>
+                    <span class="precio">$8.000</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('1 Pancheto + Cono Papas', 8000, 'venta')">➕ Agregar Combo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>2 Panchetos + Porción Papas</h3>
+                    <span class="precio">$17.000</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('2 Panchetos + Porción Papas', 17000, 'venta')">➕ Agregar Combo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>3 Panchetos + Porción Papas</h3>
+                    <span class="precio">$21.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('3 Panchetos + Porción Papas', 21500, 'venta')">➕ Agregar Combo</button>
+                </div>
+            </div>
+
+            <h3 style="text-align: left; margin: 20px 0 10px 0; color: #666;">🛵 Promos Delivery + Coca-Cola (Foto 2)</h3>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>2 Panchetos + Coca 500cc</h3>
+                    <span class="precio">$11.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('Promo Delivery: 2 Panchetos + Coca 500cc', 11500, 'venta')">🛵 Agregar Promo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>3 Panchetos + Coca 1.5L</h3>
+                    <span class="precio">$18.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('Promo Delivery: 3 Panchetos + Coca 1.5L', 18500, 'venta')">🛵 Agregar Promo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>4 Panchetos + Coca 1.5L</h3>
+                    <span class="precio">$23.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('Promo Delivery: 4 Panchetos + Coca 1.5L', 23500, 'venta')">🛵 Agregar Promo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>5 Panchetos + Coca 1.5L</h3>
+                    <span class="precio">$28.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('Promo Delivery: 5 Panchetos + Coca 1.5L', 28500, 'venta')">🛵 Agregar Promo</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>6 Panchetos + Coca 1.5L</h3>
+                    <span class="precio">$33.500</span>
+                    <button class="btn-promo-destacada" onclick="agregarAlPedido('Promo Delivery: 6 Panchetos + Coca 1.5L', 33500, 'venta')">🛵 Agregar Promo</button>
+                </div>
+            </div>
+            <!-- SECCIÓN PRODUCTOS SUELTOS -->
             <h2 class="seccion-titulo">🌭 Panchos Individuales</h2>
             <div class="grid-panchos">
                 <div class="card-pancho">
@@ -86,21 +136,7 @@
                 </div>
             </div>
 
-            <h2 class="seccion-titulo">💥 Promos 2x1</h2>
-            <div class="grid-panchos">
-                <div class="card-pancho">
-                    <h3>Promo 2x1 Común</h3>
-                    <span class="precio" style="color: #5cb85c;">$5.000 (Llevan 2)</span>
-                    <button class="btn-promo" onclick="agregarAlPedido('2x1 Pancho Común', 5000, 'venta')">🔥 Agregar 2x1</button>
-                </div>
-                <div class="card-pancho">
-                    <h3>Promo 2x1 Doble</h3>
-                    <span class="precio" style="color: #5cb85c;">$7.000 (Llevan 2)</span>
-                    <button class="btn-promo" onclick="agregarAlPedido('2x1 Pancho Doble', 7000, 'venta')">🔥 Agregar 2x1</button>
-                </div>
-            </div>
-
-            <h2 class="seccion-titulo">🍟 Papas Fritas</h2>
+            <h2 class="seccion-titulo">🍟 Papas Fritas Sueltas</h2>
             <div class="grid-panchos">
                 <div class="card-pancho">
                     <h3>Cono Papas</h3>
@@ -124,7 +160,7 @@
                 </div>
             </div>
 
-            <h2 class="seccion-titulo">🥤 Bebidas</h2>
+            <h2 class="seccion-titulo">🥤 Bebidas Sueltas</h2>
             <div class="grid-panchos">
                 <div class="card-pancho">
                     <h3>Gaseosa 500ml</h3>
