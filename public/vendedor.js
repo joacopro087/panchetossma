@@ -1,3 +1,6 @@
+// Variable global para guardar el pedido que se está armando en el momento
+let carritoPedidoActual = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const nombre_sucursal = sessionStorage.getItem('nombre_sucursal');
@@ -59,6 +62,109 @@ async function obtenerVentasDelTurno() {
     }
 }
 
+// 🛒 AGREGA EL PRODUCTO AL PEDIDO TEMPORAL (Soporta multiplicador de 2 a infinito)
+function agregarAlPedido(nombreProducto, precio, tipo) {
+    const inputCantidad = document.getElementById('multiplicadorVenta');
+    const cantidadSeleccionada = parseInt(inputCantidad.value) || 1;
+
+    if (cantidadSeleccionada < 1) return;
+
+    const productoFinal = tipo === 'gratis' ? `${nombreProducto} (CONSUMO DUEÑO)` : nombreProducto;
+
+    const itemExistente = carritoPedidoActual.find(item => item.producto === productoFinal);
+    
+    if (itemExistente) {
+        itemExistente.cantidad += cantidadSeleccionada;
+    } else {
+        carritoPedidoActual.push({
+            producto: productoFinal,
+            precio_unitario: precio,
+            cantidad: cantidadSeleccionada
+        });
+    }
+
+    inputCantidad.value = 1; // Reiniciar a 1 por comodidad
+    renderizarCarritoEnPantalla();
+}
+
+// Dibuja la lista de lo que va pidiendo el cliente en la columna derecha
+function renderizarCarritoEnPantalla() {
+    const contenedor = document.getElementById('carritoContenedor');
+    const textoTotal = document.getElementById('totalCarritoTexto');
+    contenedor.innerHTML = '';
+    
+    let totalAcumulado = 0;
+
+    if (carritoPedidoActual.length === 0) {
+        contenedor.innerHTML = '<p style="color:#999; text-align:center; padding-top:20px;">El pedido está vacío.<br>Toca los botones de la izquierda.</p>';
+        textoTotal.innerText = '\$0';
+        return;
+    }
+
+    carritoPedidoActual.forEach((item, index) => {
+        const subtotalItem = item.cantidad * item.precio_unitario;
+        totalAcumulado += subtotalItem;
+
+        const div = document.createElement('div');
+        div.className = 'item-carrito';
+        div.innerHTML = `
+            <span><b>${item.producto}</b> (x${item.cantidad})</span>
+            <span>$${subtotalItem.toLocaleString('es-AR')} 
+                <button class="btn-quitar" onclick="quitarItemDelCarrito(${index})">❌</button>
+            </span>
+        `;
+        contenedor.appendChild(div);
+    });
+
+    textoTotal.innerText = `$${totalAcumulado.toLocaleString('es-AR')}`;
+}
+
+function quitarItemDelCarrito(index) {
+    carritoPedidoActual.splice(index, 1);
+    renderizarCarritoEnPantalla();
+}
+
+function limpiarCarritoTemporal() {
+    carritoPedidoActual = [];
+    renderizarCarritoEnPantalla();
+}
+
+// 🚀 ENVÍA TODO EL PEDIDO EN GRUPO AL SERVIDOR AL TOCAR FINALIZAR VENTA
+async function finalizarPedidoCentral() {
+    if (carritoPedidoActual.length === 0) {
+        alert("Agrega por lo menos un producto para finalizar la venta.");
+        return;
+    }
+
+    const id_sucursal = sessionStorage.getItem('id_sucursal');
+    const empleado = sessionStorage.getItem('empleado');
+
+    try {
+        // Enviar cada ítem del carrito en paralelo al servidor central de internet
+        for (const item of carritoPedidoActual) {
+            await fetch('/api/ventas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_sucursal: parseInt(id_sucursal),
+                    empleado: empleado,
+                    producto: item.producto,
+                    cantidad: item.cantidad,
+                    precio_unitario: item.precio_unitario
+                })
+            });
+        }
+
+        // Vaciar carrito temporal, refrescar almacén e historial acumulado en silencio
+        limpiarCarritoTemporal();
+        obtenerStockActual();
+        obtenerVentasDelTurno();
+
+    } catch (error) {
+        console.error("Error al liquidar pedido:", error);
+    }
+}
+
 async function establecerStockInicial() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const docenas_pan = parseFloat(document.getElementById('boxpan').value) || 0;
@@ -73,7 +179,6 @@ async function establecerStockInicial() {
             body: JSON.stringify({ id_sucursal, docenas_pan, salchichas, gaseosas_500, gaseosas_15 })
         });
         if (respuesta.ok) {
-            // Cartel removido para agilizar la apertura
             obtenerStockActual();
         }
     } catch (error) {
@@ -81,44 +186,7 @@ async function establecerStockInicial() {
     }
 }
 
-async function registrarOperacion(nombreProducto, precio, tipo) {
-    const id_sucursal = sessionStorage.getItem('id_sucursal');
-    const empleado = sessionStorage.getItem('empleado');
-    
-    const inputCantidad = document.getElementById('multiplicadorVenta');
-    const cantidadSeleccionada = parseInt(inputCantidad.value) || 1;
-
-    if (cantidadSeleccionada < 1) {
-        return;
-    }
-
-    const productoFinal = tipo === 'gratis' ? `${nombreProducto} (CONSUMO DUEÑO)` : nombreProducto;
-
-    const ventaData = {
-        id_sucursal: parseInt(id_sucursal),
-        empleado: empleado,
-        producto: productoFinal,
-        cantidad: cantidadSeleccionada,
-        precio_unitario: precio
-    };
-
-    try {
-        const respuesta = await fetch('/api/ventas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(ventaData)
-        });
-        if (respuesta.ok) {
-            // Se quitó el aviso de éxito: ahora limpia el casillero y actualiza las tablas al instante en silencio
-            inputCantidad.value = 1;
-            obtenerStockActual();
-            obtenerVentasDelTurno();
-        }
-    } catch (error) {
-        console.error('Sin conexión.');
-    }
-}
-
+// PASO 1: Desplegar el ticket dashed en la pantalla sin borrar la base de datos todavía
 async function prepararTicketParaFoto() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
     const nombre_sucursal = sessionStorage.getItem('nombre_sucursal');
@@ -156,6 +224,7 @@ async function prepararTicketParaFoto() {
     }
 }
 
+// PASO 2: Borrado destructivo absoluto de la base de datos luego de la foto
 async function borrarVentasYLoguearOut() {
     const id_sucursal = sessionStorage.getItem('id_sucursal');
 

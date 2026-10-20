@@ -5,34 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panchetos - Caja Activa</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #fdf6e2; margin: 0; padding: 20px; text-align: center; }
-        .info-barra { background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; max-width: 950px; margin: 0 auto 10px auto; }
+        body { font-family: 'Segoe UI', sans-serif; background: #fdf6e2; margin: 0; padding: 20px; }
+        .info-barra { background: #333; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; max-width: 1200px; margin: 0 auto 10px auto; }
         .info-barra span { font-weight: bold; color: #f0ad4e; }
         
-        /* SELECTOR DE CANTIDAD MÚLTIPLE INFINITA */
-        .panel-multiplicador { background: #d9534f; color: white; padding: 15px; border-radius: 8px; max-width: 950px; margin: 0 auto 15px auto; display: flex; justify-content: center; align-items: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .panel-multiplicador label { font-size: 18px; font-weight: bold; }
-        .panel-multiplicador input { width: 90px; padding: 8px; font-size: 18px; font-weight: bold; text-align: center; border: none; border-radius: 6px; color: #333; }
+        /* CONTENEDOR EN DOS COLUMNAS: MENÚ Y CARRITO */
+        .contenedor-principal { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; align-items: flex-start; }
+        .columna-izquierda { flex: 2; }
+        .columna-derecha { flex: 1; background: white; border: 3px solid #333; border-radius: 15px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: sticky; top: 20px; }
+
+        .panel-multiplicador { background: #d9534f; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .panel-multiplicador input { width: 70px; padding: 6px; font-size: 16px; font-weight: bold; text-align: center; border: none; border-radius: 4px; }
+        .panel-inventario, .panel-resumen { background: white; border: 2px solid #ccc; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
         
-        .panel-inventario, .panel-resumen { background: #fff; border: 2px solid #333; padding: 15px; border-radius: 8px; max-width: 950px; margin: 0 auto 20px auto; text-align: left; }
-        h1 { color: #d9534f; margin-top: 10px; font-size: 32px; }
-        h2.seccion-titulo { color: #333; border-bottom: 2px solid #f0ad4e; max-width: 950px; margin: 30px auto 15px auto; padding-bottom: 5px; text-align: left; }
-        .grid-panchos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; max-width: 950px; margin: 0 auto; }
-        .card-pancho { background: white; border: 3px solid #f0ad4e; border-radius: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 10px;}
-        .card-pancho h3 { margin: 0 0 5px 0; font-size: 22px; color: #333; }
-        .precio { font-size: 26px; font-weight: bold; color: #d9534f; margin-bottom: 10px; display: block; }
+        h1 { color: #d9534f; margin: 10px 0; font-size: 32px; text-align: center; }
+        h2.seccion-titulo { color: #333; border-bottom: 2px solid #f0ad4e; margin: 25px 0 15px 0; padding-bottom: 5px; text-align: left; }
+        .grid-panchos { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .card-pancho { background: white; border: 3px solid #f0ad4e; border-radius: 12px; padding: 15px; box-shadow: 0 3px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
+        .card-pancho h3 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
+        .precio { font-size: 22px; font-weight: bold; color: #d9534f; margin-bottom: 10px; display: block; }
         
-        .btn-vender { background: #5cb85c; color: white; border: none; padding: 12px 10px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; margin-bottom: 8px; }
-        .btn-vender:hover { background: #4cae4c; transform: scale(1.01); }
-        .btn-gratis { background: #777; color: white; border: none; padding: 8px 10px; font-size: 14px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; }
-        .btn-promo { background: #f0ad4e; color: white; border: none; padding: 12px 10px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.2s; margin-bottom: 8px; box-shadow: 0 3px 0 #d58512;}
-        .btn-promo:hover { background: #ed9c28; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background: #f0ad4e; color: white; }
+        .btn-vender { background: #f0ad4e; color: white; border: none; padding: 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; }
+        .btn-vender:hover { background: #ec971f; }
+        .btn-gratis { background: #777; color: white; border: none; padding: 6px; font-size: 12px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; }
+        .btn-promo { background: #e05d44; color: white; border: none; padding: 10px; font-size: 15px; font-weight: bold; border-radius: 6px; cursor: pointer; width: 100%; margin-bottom: 6px; }
+
+        /* ESTILOS DEL ARMADOR DE PEDIDOS */
+        .lista-pedido { min-height: 150px; border-bottom: 2px dashed #ccc; margin-bottom: 15px; padding-bottom: 10px; }
+        .item-carrito { display: flex; justify-content: space-between; padding: 6px 0; font-size: 15px; border-bottom: 1px solid #f4f4f4; }
+        .btn-quitar { color: #d9534f; background: none; border: none; font-weight: bold; cursor: pointer; margin-left: 5px; }
+        .total-pedido-caja { font-size: 24px; font-weight: bold; text-align: center; color: #333; margin: 15px 0; }
+        .btn-finalizar { background: #5cb85c; color: white; border: none; padding: 15px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .btn-finalizar:hover { background: #4cae4c; transform: scale(1.02); }
+        .btn-cancelar { background: none; color: #777; border: none; cursor: pointer; margin-top: 10px; text-decoration: underline; width: 100%; font-size: 13px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #333; color: white; }
         .modal-cierre { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 9999; }
-        .ticket { background: #fff; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 2px dashed #333; }
+        .ticket { background: #fff; padding: 30px; border-radius: 10px; width: 90%; max-width: 400px; text-align: left; border: 2px dashed #333; }
         .btn-salir-ticket { background: #d9534f; color: white; padding: 14px; border: none; width: 100%; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 25px; }
     </style>
 </head>
@@ -40,129 +51,128 @@
     <div class="info-barra">
         <div>📍 Local: <span id="txtSucursal">...</span></div>
         <div>👤 Cajero: <span id="txtEmpleado">...</span></div>
-        <button class="btn-cierre" onclick="prepararTicketParaFoto()">📸 Armar Recibo para Foto</button>
+        <button class="btn-cierre" style="background:#d9534f; color:white; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="prepararTicketParaFoto()">📸 Armar Recibo para Foto</button>
     </div>
 
-    <!-- PANEL MULTIPLICADOR LIBRE HASTA EL INFINITO -->
-    <div class="panel-multiplicador">
-        <label>✖️ CANTIDAD DE VENTA MÚLTILE:</label>
-        <input type="number" id="multiplicadorVenta" min="1" value="1" placeholder="Ej: 5">
-        <span style="font-size: 12px;">(Deja en 1 para venta normal)</span>
+    <h1>🌭 Sistema de Pedidos - Panchetos</h1>
+
+    <div class="contenedor-principal">
+        <!-- COLUMNA IZQUIERDA: MENÚ DE BOTONES -->
+        <div class="columna-izquierda">
+            <div class="panel-multiplicador">
+                <label>✖️ MULTIPLICADOR DE UNIDADES:</label>
+                <input type="number" id="multiplicadorVenta" min="1" value="1">
+                <span style="font-size: 11px;">(Suma de a varias unidades al pedido actual)</span>
+            </div>
+            <h2 class="seccion-titulo">🌭 Panchos Individuales</h2>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>Pancho Común</h3>
+                    <span class="precio">$5.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Pancho Común', 5000, 'venta')">➕ Agregar al Pedido</button>
+                    <button class="btn-gratis" onclick="agregarAlPedido('Pancho Común', 0, 'gratis')">🎁 Consumo Dueño</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Pancho Doble</h3>
+                    <span class="precio">$7.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Pancho Doble', 7000, 'venta')">➕ Agregar al Pedido</button>
+                    <button class="btn-gratis" onclick="agregarAlPedido('Pancho Doble', 0, 'gratis')">🎁 Consumo Dueño</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Guacamole Doritos</h3>
+                    <span class="precio">$7.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Pancho Guacamole Doritos', 7000, 'venta')">➕ Agregar al Pedido</button>
+                    <button class="btn-gratis" onclick="agregarAlPedido('Pancho Guacamole Doritos', 0, 'gratis')">🎁 Consumo Dueño</button>
+                </div>
+            </div>
+
+            <h2 class="seccion-titulo">💥 Promos 2x1</h2>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>Promo 2x1 Común</h3>
+                    <span class="precio" style="color: #5cb85c;">$5.000 (Llevan 2)</span>
+                    <button class="btn-promo" onclick="agregarAlPedido('2x1 Pancho Común', 5000, 'venta')">🔥 Agregar 2x1</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Promo 2x1 Doble</h3>
+                    <span class="precio" style="color: #5cb85c;">$7.000 (Llevan 2)</span>
+                    <button class="btn-promo" onclick="agregarAlPedido('2x1 Pancho Doble', 7000, 'venta')">🔥 Agregar 2x1</button>
+                </div>
+            </div>
+
+            <h2 class="seccion-titulo">🍟 Papas Fritas</h2>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>Cono Papas</h3>
+                    <span class="precio">$4.500</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Cono Papas', 4500, 'venta')">➕ Agregar</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Porción Papas (1 pers)</h3>
+                    <span class="precio">$7.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Porción Papas (1 pers)', 7000, 'venta')">➕ Agregar</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Porción Papas (2 pers)</h3>
+                    <span class="precio">$8.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Porción Papas (2 pers)', 8000, 'venta')">➕ Agregar</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Porción Papas (4 pers)</h3>
+                    <span class="precio">$12.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Porción Papas (4 pers)', 12000, 'venta')">➕ Agregar</button>
+                </div>
+            </div>
+
+            <h2 class="seccion-titulo">🥤 Bebidas</h2>
+            <div class="grid-panchos">
+                <div class="card-pancho">
+                    <h3>Gaseosa 500ml</h3>
+                    <span class="precio">$3.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Gaseosa 500ml', 3000, 'venta')">➕ Agregar</button>
+                </div>
+                <div class="card-pancho">
+                    <h3>Gaseosa 1.5L</h3>
+                    <span class="precio">$5.000</span>
+                    <button class="btn-vender" onclick="agregarAlPedido('Gaseosa 1.5L', 5000, 'venta')">➕ Agregar</button>
+                </div>
+            </div>
+
+            <div class="panel-resumen" style="margin-top: 30px;">
+                <h4>📋 Insumos de Almacén</h4>
+                <div class="inputs-stock">
+                    <label>Pan (Doz): <input type="number" step="0.1" id="boxpan"></label>
+                    <label>Salchichas (U): <input type="number" id="boxsalchichas"></label>
+                    <label>Gaseosas 500: <input type="number" id="boxg500"></label>
+                    <label>Gaseosas 1.5L: <input type="number" id="boxg15"></label>
+                    <button class="btn-ajustar" style="padding:4px 8px; font-size:12px;" onclick="establecerStockInicial()">💾 Guardar Apertura</button>
+                </div>
+            </div>
+
+            <div class="panel-resumen">
+                <h4>💰 Caja Acumulada del Turno (Hoy)</h4>
+                <table>
+                    <thead>
+                        <tr><th>Producto</th><th>Cantidad Total</th><th>Subtotal</th></tr>
+                    </thead>
+                    <tbody id="tablaTurnoLocal"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: EL CARRITO INTERACTIVO -->
+        <div class="columna-derecha">
+            <h3 style="margin-top:0; color:#333; border-bottom:2px dashed #333; padding-bottom:10px; text-align:center;">🛒 PEDIDO ACTUAL</h3>
+            <div class="lista-pedido" id="carritoContenedor"></div>
+            <div class="total-pedido-caja">
+                TOTAL: <span id="totalCarritoTexto">$0</span>
+            </div>
+            <button class="btn-finalizar" onclick="finalizarPedidoCentral()">🛒 Finalizar Venta</button>
+            <button class="btn-cancelar" onclick="limpiarCarritoTemporal()">Vaciar Pedido actual</button>
+        </div>
     </div>
 
-    <!-- INVENTARIO -->
-    <div class="panel-inventario">
-        <h4>📋 Inventario de Apertura / Control de Almacén</h4>
-        <div class="inputs-stock">
-            <label>Pan (Doz): <input type="number" step="0.1" id="boxpan"></label>
-            <label>Salchichas (U): <input type="number" id="boxsalchichas"></label>
-            <label>Gaseosas 500: <input type="number" id="boxg500"></label>
-            <label>Gaseosas 1.5L: <input type="number" id="boxg15"></label>
-            <button class="btn-ajustar" onclick="establecerStockInicial()">💾 Confirmar Stock Inicial</button>
-        </div>
-    </div>
-
-    <h1>🌭 Registrar Operación - Panchetos</h1>
-    
-    <!-- SECCIÓN PANCHOS -->
-    <h2 class="seccion-titulo">🌭 Panchos Individuales</h2>
-    <div class="grid-panchos">
-        <div class="card-pancho">
-            <h3>Pancho Común</h3>
-            <span class="precio">$5.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Pancho Común', 5000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Pancho Común', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Pancho Doble</h3>
-            <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Pancho Doble', 7000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Pancho Doble', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Guacamole Doritos</h3>
-            <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Pancho Guacamole Doritos', 7000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Pancho Guacamole Doritos', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-    </div>
-
-    <!-- SECCIÓN DESCUENTOS Y PROMOS DE SECCIÓN -->
-    <h2 class="seccion-titulo">💥 Sección Promos y Descuentos (2x1)</h2>
-    <div class="grid-panchos">
-        <div class="card-pancho">
-            <h3>Promo 2x1 Común</h3>
-            <span class="precio" style="color: #5cb85c;">$5.000 (Llevan 2)</span>
-            <button class="btn-promo" onclick="registrarOperacion('2x1 Pancho Común', 5000, 'venta')">🔥 Registrar 2x1</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Promo 2x1 Doble</h3>
-            <span class="precio" style="color: #5cb85c;">$7.000 (Llevan 2)</span>
-            <button class="btn-promo" onclick="registrarOperacion('2x1 Pancho Doble', 7000, 'venta')">🔥 Registrar 2x1</button>
-        </div>
-    </div>
-        <!-- SECCIÓN PAPAS -->
-    <h2 class="seccion-titulo">🍟 Papas Fritas</h2>
-    <div class="grid-panchos">
-        <div class="card-pancho">
-            <h3>Cono Papas</h3>
-            <span class="precio">$4.500</span>
-            <button class="btn-vender" onclick="registrarOperacion('Cono Papas', 4500, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Cono Papas', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Porción Papas (1 pers)</h3>
-            <span class="precio">$7.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (1 pers)', 7000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (1 pers)', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Porción Papas (2 pers)</h3>
-            <span class="precio">$8.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (2 pers)', 8000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (2 pers)', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Porción Papas (4 pers)</h3>
-            <span class="precio">$12.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Porción Papas (4 pers)', 12000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Porción Papas (4 pers)', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-    </div>
-
-    <!-- SECCIÓN BEBIDAS -->
-    <h2 class="seccion-titulo">🥤 Bebidas</h2>
-    <div class="grid-panchos">
-        <div class="card-pancho">
-            <h3>Gaseosa 500ml</h3>
-            <span class="precio">$3.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Gaseosa 500ml', 3000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Gaseosa 500ml', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-        <div class="card-pancho">
-            <h3>Gaseosa 1.5L</h3>
-            <span class="precio">$5.000</span>
-            <button class="btn-vender" onclick="registrarOperacion('Gaseosa 1.5L', 5000, 'venta')">⚡ Registrar</button>
-            <button class="btn-gratis" onclick="registrarOperacion('Gaseosa 1.5L', 0, 'gratis')">🎁 Consumo Dueño</button>
-        </div>
-    </div>
-
-    <!-- ACUMULADO DEL TURNO -->
-    <div class="panel-resumen" style="margin-top: 40px;">
-        <h4>💰 Resumen de Ventas Acumuladas en este Turno</h4>
-        <table>
-            <thead>
-                <tr>
-                    <th>Producto</th>
-                    <th>Cantidad Total</th>
-                    <th>Subtotal Recaudado</th>
-                </tr>
-            </thead>
-            <tbody id="tablaTurnoLocal"></tbody>
-        </table>
-    </div>
-
-    <!-- VENTANA EMERGENTE FIJA PARA LA FOTO -->
+    <!-- TICKET FLOTANTE PARA LA FOTO -->
     <div id="modalTicket" class="modal-cierre">
         <div class="ticket">
             <h2>📜 TICKET DE CIERRE</h2>
@@ -176,8 +186,8 @@
                 <p style="font-size: 18px; text-align: center; margin-bottom: 0;">💵 <b>TOTAL RECAUDADO EN EL DÍA:</b></p>
                 <p style="font-size: 34px; font-weight: bold; text-align: center; color: #5cb85c; margin-top: 5px;" id="tickTotal">$0</p>
             </div>
-            <p style="font-size: 14px; font-weight: bold; background: #fdf6e2; padding: 10px; border-radius: 4px; color: #d9534f; text-align: center; margin: 15px 0 0 0;">📸 ¡SACA LA FOTO / CAPTURA DE PANTALLA AHORA!</p>
-            <button class="btn-salir-ticket" onclick="borrarVentasYLoguearOut()">🔴 Ya saqué la foto. Cerrar Caja y Borrar Ventas</button>
+            <p style="font-size: 13px; font-weight: bold; background: #fdf6e2; padding: 8px; border-radius: 4px; color: #d9534f; text-align: center; margin: 15px 0 0 0;">📸 ¡SACA LA FOTO AHORA!</p>
+            <button class="btn-salir-ticket" onclick="borrarVentasYLoguearOut()">🔴 Turno Terminado. Borrar Base de Datos</button>
         </div>
     </div>
 
