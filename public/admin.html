@@ -14,6 +14,7 @@
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid #ddd; }
         th { background-color: #d9534f; color: white; }
         .badge-sucursal { background: #f0ad4e; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
+        .badge-historial { background: #5cb85c; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
         .form-recarga { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .form-recarga input, .form-recarga select, .form-recarga button { padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; }
         .form-recarga button { background: #5cb85c; color: white; border: none; font-weight: bold; cursor: pointer; }
@@ -57,20 +58,37 @@
         </div>
     </div>
 
-    <!-- TABLA DE VENTAS -->
+    <!-- TABLA DE VENTAS DEL TURNO VIVO -->
     <div class="card-reporte">
-        <h2>💰 Historial de Facturación</h2>
+        <h2>💰 Ventas del Turno Activo (Cajas Abiertas)</h2>
         <table>
             <thead>
                 <tr>
                     <th>Sucursal</th>
                     <th>Cajero/a</th>
                     <th>Variedad Vendida</th>
-                    <th>Cantidad</th>
+                    <th>Cantidad Total</th>
                     <th>Total Recaudado</th>
                 </tr>
             </thead>
             <tbody id="tablaAdmin"></tbody>
+        </table>
+    </div>
+
+    <!-- NUEVA TABLA: HISTORIAL TEMPORAL DE AUDITORÍA DE 48 HORAS -->
+    <div class="card-reporte" style="border: 2px solid #5cb85c;">
+        <h2>📋 Historial de Cierres de Caja (Últimas 48 Horas)</h2>
+        <p style="color: #666; font-size: 14px; margin-top: 0;">Los registros de esta sección se borran físicamente de internet de forma automática exactamente 2 días después del cierre.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sucursal</th>
+                    <th>Cajera que cerró</th>
+                    <th>Fecha y Hora del Cierre</th>
+                    <th>Total de la Foto ($)</th>
+                </tr>
+            </thead>
+            <tbody id="tablaAuditoria48h"></tbody>
         </table>
     </div>
 

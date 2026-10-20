@@ -1,15 +1,16 @@
 async function cargarMétricas() {
     const tablaVentas = document.getElementById('tablaAdmin');
     const tablaStock = document.getElementById('tablaStock');
+    const tablaAuditoria = document.getElementById('tablaAuditoria48h');
     
     try {
         const respuesta = await fetch('/api/reportes');
         const datos = await respuesta.json();
         
-        // 1. Pintar Ventas actuales que no fueron borradas de la base de datos
+        // 1. Pintar Ventas del turno activo (Cajas abiertas)
         tablaVentas.innerHTML = '';
         if (!datos.ventas || datos.ventas.length === 0) {
-            tablaVentas.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No hay ventas registradas en este momento. Todas las cajas están cerradas y purgadas.</td></tr>';
+            tablaVentas.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#999;">No hay ventas registradas en este momento. Todas las cajas están cerradas.</td></tr>';
         } else {
             datos.ventas.forEach(fila => {
                 const tr = document.createElement('tr');
@@ -39,6 +40,26 @@ async function cargarMétricas() {
                     <td>${local.gaseosas_15} u.</td>
                 `;
                 tablaStock.appendChild(tr);
+            });
+        }
+
+        // 3. Pintar Historial de Auditoría de 48 Horas (Cajas cerradas recientemente)
+        tablaAuditoria.innerHTML = '';
+        if (!datos.historial_48h || datos.historial_48h.length === 0) {
+            tablaAuditoria.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">No se registran cierres de caja en las últimas 48 horas.</td></tr>';
+        } else {
+            datos.historial_48h.forEach(cierre => {
+                const tr = document.createElement('tr');
+                // Formatear la fecha para que sea legible en Argentina
+                let fechaFormateada = new Date(cierre.fecha_hora).toLocaleString('es-AR');
+                
+                tr.innerHTML = `
+                    <td><span class="badge-historial">${cierre.sucursal}</span></td>
+                    <td>${cierre.empleado_cierre.toUpperCase()}</td>
+                    <td>${fechaFormateada} hs</td>
+                    <td><b>$${Number(cierre.total_recaudado).toLocaleString('es-AR')}</b></td>
+                `;
+                tablaAuditoria.appendChild(tr);
             });
         }
 
